@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkPlan — Mon Planning</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #f0c040;
+    --accent2: #e07b39;
+    --text: #eaeaf0;
+    --muted: #6b6b80;
+    --success: #4ade80;
+    --danger: #f87171;
+    --days: #252530;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(240,192,64,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(224,123,57,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .logo-text {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 2px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #clock {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  #notif-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  #notif-btn.enabled {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  #notif-btn:hover { opacity: 0.8; }
+
+  /* Add Task Panel */
+  .add-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .add-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  select option { background: var(--surface2); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-add:hover { background: #ffd060; transform: translateY(-1px); }
+
+  .btn-clear {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-clear:hover { background: rgba(248,113,113,0.1); }
+
+  /* Week Grid */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .day-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .day-col.today {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(240,192,64,0.1);
+  }
+
+  .day-header {
+    background: var(--days);
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-name {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .day-col.today .day-name { color: var(--accent); }
+
+  .day-tasks {
+    padding: 8px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .task-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    position: relative;
+    animation: slideIn 0.3s ease;
+    cursor: default;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-card.done {
+    opacity: 0.4;
+  }
+
+  .task-card.done .task-name {
+    text-decoration: line-through;
+  }
+
+  .task-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+
+  .task-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .task-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+  }
+
+  .btn-done, .btn-del {
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .btn-done {
+    background: rgba(74,222,128,0.15);
+    color: var(--success);
+    border: 1px solid rgba(74,222,128,0.3);
+  }
+
+  .btn-del {
+    background: rgba(248,113,113,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(248,113,113,0.2);
+  }
+
+  .btn-done:hover, .btn-del:hover { opacity: 0.7; }
+
+  .empty-day {
+    text-align: center;
+    color: var(--border);
+    font-size: 20px;
+    margin-top: 20px;
+  }
+
+  /* Notification Toast */
+  #toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px 20px;
+    max-width: 300px;
+    z-index: 1000;
+    display: none;
+    animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(40px) scale(0.9); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  .toast-label {
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .toast-msg {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .stat-divider {
+    width: 1px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .week-grid { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .stats-bar { flex-wrap: wrap; gap: 12px; }
+  }
+
+  @media (max-width: 480px) {
+    .week-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  /* Permission banner */
+  #perm-banner {
+    background: rgba(240,192,64,0.08);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  #perm-banner button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="toast">
+  <div class="toast-label">⏰ Rappel</div>
+  <div class="toast-msg" id="toast-msg"></div>
+</div>
+
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <span class="logo-text">WorkPlan</span>
+      <span class="logo-dot"></span>
+    </div>
+    <div class="header-right">
+      <span id="clock">00:00:00</span>
+      <button id="notif-btn" onclick="toggleNotif()">🔔 Activer rappels</button>
+    </div>
+  </header>
+
+  <!-- Permission banner -->
+  <div id="perm-banner" style="display:none">
+    ⚠️ Active les notifications pour recevoir tes rappels à l'heure !
+    <button onclick="requestNotif()">Autoriser</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">Tâches totales</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="stat-today">0</span>
+      <span class="stat-label">Aujourd'hui</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="stat-done">0</span>
+      <span class="stat-label">Terminées</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="stat-upcoming">0</span>
+      <span class="stat-label">À venir</span>
+    </div>
+  </div>
+
+  <!-- Add Task -->
+  <div class="add-panel">
+    <div class="panel-title">+ Ajouter une tâche</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tâche</label>
+        <input type="text" id="task-name" placeholder="ex: Réviser les maths..." />
+      </div>
+      <div class="form-group">
+        <label>Jour</label>
+        <select id="task-day">
+          <option value="0">Lundi</option>
+          <option value="1">Mardi</option>
+          <option value="2">Mercredi</option>
+          <option value="3">Jeudi</option>
+          <option value="4">Vendredi</option>
+          <option value="5">Samedi</option>
+          <option value="6">Dimanche</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Heure</label>
+        <input type="time" id="task-time" />
+      </div>
+      <div style="display:flex; gap:8px; align-items:flex-end;">
+        <button class="btn-add" onclick="addTask()">Ajouter</button>
+        <button class="btn-clear" onclick="clearAll()">Tout vider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week Grid -->
+  <div class="week-grid" id="week-grid"></div>
+
+</div>
+
+<script>
+  const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  let tasks = JSON.parse(localStorage.getItem('workplan_tasks') || '[]');
+  let notifEnabled = false;
+  let alreadyNotified = new Set(JSON.parse(localStorage.getItem('workplan_notified') || '[]'));
+
+  // Today's day index (0=Monday ... 6=Sunday)
+  function getTodayIndex() {
+    const d = new Date().getDay(); // 0=Sun
+    return d === 0 ? 6 : d - 1;
+  }
+
+  function saveTasks() {
+    localStorage.setItem('workplan_tasks', JSON.stringify(tasks));
+  }
+
+  function addTask() {
+    const name = document.getElementById('task-name').value.trim();
+    const day = parseInt(document.getElementById('task-day').value);
+    const time = document.getElementById('task-time').value;
+    if (!name) { alert('Entre le nom de la tâche !'); return; }
+    if (!time) { alert('Choisis une heure !'); return; }
+    tasks.push({ id: Date.now(), name, day, time, done: false });
+    saveTasks();
+    document.getElementById('task-name').value = '';
+    renderGrid();
+  }
+
+  function toggleDone(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; saveTasks(); renderGrid(); }
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    renderGrid();
+  }
+
+  function clearAll() {
+    if (confirm('Vider toutes les tâches ?')) {
+      tasks = [];
+      saveTasks();
+      renderGrid();
+    }
+  }
+
+  function renderGrid() {
+    const today = getTodayIndex();
+    const grid = document.getElementById('week-grid');
+    grid.innerHTML = '';
+
+    let total = 0, todayCount = 0, done = 0, upcoming = 0;
+    const now = new Date();
+    const nowStr = now.toTimeString().slice(0,5);
+
+    DAYS.forEach((day, i) => {
+      const col = document.createElement('div');
+      col.className = 'day-col' + (i === today ? ' today' : '');
+
+      col.innerHTML = `<div class="day-header"><div class="day-name">${day}</div></div><div class="day-tasks" id="day-${i}"></div>`;
+      grid.appendChild(col);
+
+      const dayTasks = tasks.filter(t => t.day === i).sort((a,b) => a.time.localeCompare(b.time));
+      const container = col.querySelector(`#day-${i}`);
+
+      if (dayTasks.length === 0) {
+        container.innerHTML = '<div class="empty-day">—</div>';
+      } else {
+        dayTasks.forEach(t => {
+          total++;
+          if (i === today) todayCount++;
+          if (t.done) done++;
+          else if (i > today || (i === today && t.time > nowStr)) upcoming++;
+
+          const card = document.createElement('div');
+          card.className = 'task-card' + (t.done ? ' done' : '');
+          card.innerHTML = `
+            <div class="task-time">${t.time}</div>
+            <div class="task-name">${t.name}</div>
+            <div class="task-actions">
+              <button class="btn-done" onclick="toggleDone(${t.id})">${t.done ? 'Annuler' : '✓ Fait'}</button>
+              <button class="btn-del" onclick="deleteTask(${t.id})">✕</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+    });
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-today').textContent = todayCount;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-upcoming').textContent = upcoming;
+  }
+
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  }
+
+  // Notifications
+  function toggleNotif() {
+    if (!notifEnabled) requestNotif();
+    else {
+      notifEnabled = false;
+      document.getElementById('notif-btn').textContent = '🔔 Activer rappels';
+      document.getElementById('notif-btn').classList.remove('enabled');
+    }
+  }
+
+  function requestNotif() {
+    document.getElementById('perm-banner').style.display = 'none';
+    if (!('Notification' in window)) {
+      showToast('Notifications non supportées par ce navigateur');
+      return;
+    }
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        notifEnabled = true;
+        document.getElementById('notif-btn').textContent = '🔔 Rappels actifs';
+        document.getElementById('notif-btn').classList.add('enabled');
+        showToast('Rappels activés ! Tu recevras une notification à chaque tâche.');
+      } else {
+        showToast('Permission refusée. Active depuis les paramètres du navigateur.');
+      }
+    });
+  }
+
+  function showToast(msg, duration = 4000) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, duration);
+  }
+
+  function checkReminders() {
+    const now = new Date();
+    const todayIdx = getTodayIndex();
+    const nowStr = now.toTimeString().slice(0,5);
+
+    tasks.filter(t => t.day === todayIdx && t.time === nowStr && !t.done).forEach(t => {
+      const key = `${t.id}-${nowStr}`;
+      if (alreadyNotified.has(key)) return;
+      alreadyNotified.add(key);
+      localStorage.setItem('workplan_notified', JSON.stringify([...alreadyNotified]));
+
+      // In-app toast always
+      showToast(`⏰ ${t.time} — ${t.name}`, 8000);
+
+      // Browser notification if enabled
+      if (notifEnabled && Notification.permission === 'granted') {
+        new Notification('WorkPlan — Rappel ! ⏰', {
+          body: `Il est ${t.time} : ${t.name}`,
+          icon: 'https://via.placeholder.com/64/f0c040/000000?text=W'
+        });
+      }
+    });
+  }
+
+  // Check if permission already granted
+  function initNotif() {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        notifEnabled = true;
+        document.getElementById('notif-btn').textContent = '🔔 Rappels actifs';
+        document.getElementById('notif-btn').classList.add('enabled');
+      } else if (Notification.permission === 'default') {
+        document.getElementById('perm-banner').style.display = 'flex';
+      }
+    }
+  }
+
+  // Pre-select today's day
+  function preselectToday() {
+    document.getElementById('task-day').value = getTodayIndex();
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('task-time').value = `${h}:${m}`;
+  }
+
+  // Enter key to add
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement.id === 'task-name') addTask();
+  });
+
+  // Init
+  renderGrid();
+  updateClock();
+  preselectToday();
+  initNotif();
+  setInterval(updateClock, 1000);
+  setInterval(checkReminders, 10000); // Check every 10s
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "WorkPlan — Mon Planning",
+  "short_name": "WorkPlan",
+  "description": "Planning hebdomadaire avec rappels hors-ligne",
+  "start_url": "./planning.html",
+  "display": "standalone",
+  "background_color": "#0d0d0f",
+  "theme_color": "#f0c040",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192/f0c040/000000?text=W",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512/f0c040/000000?text=W",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
